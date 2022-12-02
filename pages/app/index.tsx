@@ -1,4 +1,4 @@
-export default function Home() {
+export default function App() {
   return (
     <div className="flex bg-green-100 h-screen">
       <div className="flex flex-col justify-center m-auto">
