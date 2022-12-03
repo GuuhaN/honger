@@ -13,6 +13,10 @@ export async function getServerSideProps() {
 }
 
 async function saveRestaurant(restaurant: Prisma.RestaurantCreateInput) {
+  if (!restaurant.name) {
+    throw new Error("Suggestion cannot be empty");
+  }
+
   const response = await fetch("api/restaurant", {
     method: "POST",
     body: JSON.stringify(restaurant),
@@ -68,7 +72,7 @@ export default function App({ restaurants }: any) {
             />
             <button
               className="border rounded border-black bg-green-200 p-2 self-center w-full"
-              onClick={() => saveRestaurant({ name: suggestionInput })}
+              onClick={() => saveRestaurant({ name: suggestionInput ?? "" })}
             >
               Suggestie toevoegen
             </button>
