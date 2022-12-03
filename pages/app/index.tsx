@@ -3,8 +3,8 @@ import { PrismaClient, Restaurant, Prisma } from "@prisma/client";
 
 export async function getServerSideProps() {
   const prisma = new PrismaClient();
-  // const restaurants: Restaurant[] = await prisma.restaurant.findMany();
-  const restaurants: Restaurant[] = [];
+  const restaurants: Restaurant[] = await prisma.restaurant.findMany();
+  // const restaurants: Restaurant[] = [];
 
   return {
     props: {
