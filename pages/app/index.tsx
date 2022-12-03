@@ -27,8 +27,6 @@ async function saveRestaurant(restaurant: Prisma.RestaurantCreateInput) {
     throw new Error(response.statusText);
   }
 
-  await getServerSideProps();
-
   return await response.json();
 }
 
