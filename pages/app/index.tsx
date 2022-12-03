@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { PrismaClient, Restaurant, Prisma } from "@prisma/client";
+import Confetti from "react-confetti";
 
 export async function getServerSideProps() {
   const prisma = new PrismaClient();
@@ -40,6 +41,17 @@ export default function App({ restaurants }: any) {
 
   return (
     <div className="flex bg-green-100 h-screen">
+      {restaurant[randomNumber]?.name === "KFC" && (
+        <>
+          <Confetti
+            className="h-screen w-screen"
+            numberOfPieces={200}
+            wind={0.025}
+            gravity={0.05}
+          />
+          <audio src="audio/SIU.mp3" autoPlay></audio>
+        </>
+      )}
       <div className="flex flex-col justify-center m-auto gap-4">
         <div className="flex flex-col self-center gap-4">
           <div className="flex flex-col gap-2">
