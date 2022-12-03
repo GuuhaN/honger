@@ -62,11 +62,15 @@ export default function App({ restaurants }: any) {
               <button
                 className="border rounded border-black bg-green-400 p-2 w-full"
                 type="submit"
-                onClick={() =>
-                  setRandomNumber(
-                    Math.floor(Math.random() * restaurants.length)
-                  )
-                }
+                onClick={() => {
+                  let randNum = randomNumber;
+
+                  while (randNum === randomNumber) {
+                    randNum = Math.floor(Math.random() * restaurants.length);
+                  }
+
+                  setRandomNumber(randNum);
+                }}
               >
                 Waar gaan we eten
               </button>
