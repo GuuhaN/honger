@@ -1,55 +1,84 @@
 import { useState } from "react";
+import { PrismaClient, Restaurant } from "@prisma/client";
 
-export default function App() {
-  const suggestions: string[] = [
-    "Wagamama",
-    "Loetje",
-    "KFC",
-    "Tai Soen",
-    "Key West Beachhouse",
-    "Vineyard",
-    "The Streetfood Club",
-    "Jumbo Foodmarkt",
-  ];
+export async function getServerSideProps() {
+  const prisma = new PrismaClient();
+  const restaurants: Restaurant[] = await prisma.restaurant.findMany();
+
+  return {
+    props: {
+      restaurants: restaurants,
+    },
+  };
+}
+
+async function saveRestaurant(restaurant) {
+  const response = await fetch("api/restaurant", {
+    method: "POST",
+    body: JSON.stringify(restaurant),
+  });
+
+  if (!response.ok) {
+    throw new Error(response.statusText);
+  }
+
+  await getServerSideProps();
+
+  return await response.json();
+}
+
+export default function App({ restaurants }) {
+  const [restaurant] = useState(restaurants);
+  const [suggestionInput, setSuggestionInput] = useState<string>();
 
   const [randomNumber, setRandomNumber] = useState<number>(
-    suggestions.length + 1
+    restaurant.length + 1
   );
 
   return (
     <div className="flex bg-green-100 h-screen">
       <div className="flex flex-col justify-center m-auto gap-4">
-        <div className="flex flex-col self-center gap-2">
-          <div className="text-5xl font-bold">{`Honger <^>`}</div>
-          <div className="text-2xl font-light tracking-widest">Eten</div>
-          <div className="text-xl font-light tracking-wide">Schuiven</div>
-          <div className="flex gap-4">
+        <div className="flex flex-col self-center gap-4">
+          <div className="flex flex-col gap-2">
+            <div className="text-5xl font-bold">{`Honger <°>`}</div>
+            <div className="text-2xl font-light tracking-widest">Eten</div>
+            <div className="text-xl font-light tracking-wide">Schuiven</div>
+            <div className="flex">
+              <button
+                className="border rounded border-black bg-green-400 p-2 w-full"
+                type="submit"
+                onClick={() =>
+                  setRandomNumber(
+                    Math.floor(Math.random() * restaurants.length)
+                  )
+                }
+              >
+                Waar gaan we eten
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <input
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              id="suggestionName"
+              type="text"
+              placeholder="Restaurant naam"
+              onChange={(event) => setSuggestionInput(event.target.value)}
+            />
             <button
-              className="border rounded border-black bg-green-400 p-2"
-              type="submit"
-              onClick={() =>
-                setRandomNumber(Math.floor(Math.random() * suggestions.length))
-              }
+              className="border rounded border-black bg-green-200 p-2 self-center w-full"
+              onClick={() => saveRestaurant({ name: suggestionInput })}
             >
-              Waar gaan we eten
-            </button>
-            <button
-              className="border rounded border-black bg-green-400 p-2"
-              type="submit"
-              disabled
-            >
-              Wat gaan we eten
+              Suggestie toevoegen
             </button>
           </div>
-          <button className="border rounded border-black bg-green-200 p-2 self-center">
-            Suggestie toevoegen
-          </button>
         </div>
         <div className="self-center text-center">
-          <div className="text-2xl font-bold">Vandaag gaan we eten</div>
-          <div className="text-xl tracking-wide">
-            {suggestions[randomNumber]
-              ? suggestions[randomNumber]
+          <div className="text-3xl font-bold">Vandaag gaan we eten</div>
+          <div className="text-2xl tracking-widest">
+            {restaurant[randomNumber]
+              ? restaurant[randomNumber].name
               : "Nog geen idee"}
           </div>
         </div>
