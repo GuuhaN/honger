@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PrismaClient, Restaurant } from "@prisma/client";
+import { PrismaClient, Restaurant, Prisma } from "@prisma/client";
 
 export async function getServerSideProps() {
   const prisma = new PrismaClient();
@@ -12,7 +12,7 @@ export async function getServerSideProps() {
   };
 }
 
-async function saveRestaurant(restaurant) {
+async function saveRestaurant(restaurant: Prisma.RestaurantCreateInput) {
   const response = await fetch("api/restaurant", {
     method: "POST",
     body: JSON.stringify(restaurant),
@@ -27,8 +27,8 @@ async function saveRestaurant(restaurant) {
   return await response.json();
 }
 
-export default function App({ restaurants }) {
-  const [restaurant] = useState(restaurants);
+export default function App({ restaurants }: any) {
+  const [restaurant] = useState<Restaurant[]>(restaurants);
   const [suggestionInput, setSuggestionInput] = useState<string>();
 
   const [randomNumber, setRandomNumber] = useState<number>(
