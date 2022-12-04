@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { PrismaClient, Restaurant, Prisma } from "@prisma/client";
 import Confetti from "react-confetti";
-import { GetStaticProps } from "next";
 import { useRouter } from "next/router";
 
+const prisma = new PrismaClient();
+
 export async function getServerSideProps() {
-  const prisma = new PrismaClient();
   const restaurants: Restaurant[] = await prisma.restaurant.findMany();
+  // const restaurants: Restaurant[] = [];
 
   return {
     props: {

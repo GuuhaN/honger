@@ -6,7 +6,8 @@ module.exports = {
       {
         source: '/',
         destination: '/app',
-        permanent: true,
+        permanent: false,
+        basePath: false
       },
     ]
   },
