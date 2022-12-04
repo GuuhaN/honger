@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PrismaClient, Restaurant, Prisma } from "@prisma/client";
 import Confetti from "react-confetti";
+import { GetStaticProps } from "next";
+import { useRouter } from "next/router";
 
 export async function getServerSideProps() {
   const prisma = new PrismaClient();
   const restaurants: Restaurant[] = await prisma.restaurant.findMany();
-  // const restaurants: Restaurant[] = [];
 
   return {
     props: {
@@ -16,7 +17,8 @@ export async function getServerSideProps() {
 
 async function saveRestaurant(restaurant: Prisma.RestaurantCreateInput) {
   if (!restaurant.name) {
-    throw new Error("Suggestion cannot be empty");
+    alert("Suggestion cannot be empty");
+    return;
   }
 
   const response = await fetch("api/restaurant", {
@@ -28,20 +30,28 @@ async function saveRestaurant(restaurant: Prisma.RestaurantCreateInput) {
     throw new Error(response.statusText);
   }
 
+  alert(`${restaurant.name} added!`);
+
   return await response.json();
 }
 
 export default function App({ restaurants }: any) {
-  const [restaurant] = useState<Restaurant[]>(restaurants);
-  const [suggestionInput, setSuggestionInput] = useState<string>();
+  const router = useRouter();
 
+  const [suggestionInput, setSuggestionInput] = useState<string>();
   const [randomNumber, setRandomNumber] = useState<number>(
-    restaurant.length + 1
+    restaurants.length + 1
   );
+
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    setRandomNumber(restaurants.length + 1);
+  }, [restaurants]);
 
   return (
     <div className="flex bg-green-100 h-screen">
-      {restaurant[randomNumber]?.name === "KFC" && (
+      {restaurants[randomNumber]?.name === "KFC" && (
         <>
           <Confetti
             className="h-screen w-screen"
@@ -87,7 +97,11 @@ export default function App({ restaurants }: any) {
             />
             <button
               className="border rounded border-black bg-green-200 p-2 self-center w-full"
-              onClick={() => saveRestaurant({ name: suggestionInput ?? "" })}
+              onClick={() => {
+                saveRestaurant({ name: suggestionInput ?? "" }).then(() => {
+                  router.replace(router.asPath);
+                });
+              }}
             >
               Suggestie toevoegen
             </button>
@@ -96,8 +110,8 @@ export default function App({ restaurants }: any) {
         <div className="self-center text-center">
           <div className="text-3xl font-bold">Vandaag gaan we eten</div>
           <div className="text-2xl tracking-widest">
-            {restaurant[randomNumber]
-              ? restaurant[randomNumber].name
+            {restaurants[randomNumber]
+              ? restaurants[randomNumber].name
               : "Nog geen idee"}
           </div>
         </div>
