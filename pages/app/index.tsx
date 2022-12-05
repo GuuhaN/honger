@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
-import { PrismaClient, Restaurant, Prisma } from "@prisma/client";
-import Confetti from "react-confetti";
+import { Prisma, Restaurant } from "@prisma/client";
 import { useRouter } from "next/router";
+import prisma from "../../components/prisma";
+import Confetti from "react-confetti";
+import dynamic from "next/dynamic";
+const SuggestionModal = dynamic(
+  () => import("../../components/modals/suggestionModal"),
+  { ssr: false }
+);
 
 export async function getServerSideProps() {
-  const prisma = new PrismaClient();
   const restaurants: Restaurant[] = await prisma.restaurant.findMany();
   // const restaurants: Restaurant[] = [];
 
@@ -18,21 +23,6 @@ export async function getServerSideProps() {
 async function saveRestaurant(restaurant: Prisma.RestaurantCreateInput) {
   if (!restaurant.name) {
     alert("Suggestion cannot be empty");
-    return;
-  }
-
-  const prisma = new PrismaClient();
-
-  const foundRestaurants: Restaurant[] = await prisma.restaurant.findMany();
-
-  if (
-    foundRestaurants.find(
-      (foundRestaurant) =>
-        foundRestaurant.name.replace(/\s/g, "").toLowerCase() ==
-        restaurant.name.replace(/\s/g, "").toLowerCase()
-    )
-  ) {
-    alert("This restaurant already exists");
     return;
   }
 
@@ -58,6 +48,8 @@ export default function App({ restaurants }: any) {
     restaurants.length + 1
   );
 
+  const [openSuggestionModal, setOpenSuggestionModal] = useState(false);
+
   useEffect(() => {
     if (!router.isReady) return;
 
@@ -74,9 +66,17 @@ export default function App({ restaurants }: any) {
             numberOfPieces={200}
             wind={0.025}
             gravity={0.05}
+            style={{ zIndex: 0 }}
           />
           <audio src="audio/SIU.mp3" autoPlay></audio>
         </>
+      )}
+      {openSuggestionModal && (
+        <SuggestionModal
+          isOpen={openSuggestionModal}
+          restaurants={restaurants}
+          closeModal={() => setOpenSuggestionModal(false)}
+        />
       )}
       <div className="flex flex-col justify-center m-auto gap-4">
         <div className="flex flex-col self-center gap-4">
@@ -103,15 +103,14 @@ export default function App({ restaurants }: any) {
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <input
+          {/* <input
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               id="suggestionName"
               type="text"
               placeholder="Restaurant naam"
               onChange={(event) => setSuggestionInput(event.target.value)}
-            />
-            <button
+            /> */}
+          {/* <button
               className="border rounded border-black bg-green-200 p-2 self-center w-full"
               onClick={() => {
                 if (
@@ -132,8 +131,13 @@ export default function App({ restaurants }: any) {
               }}
             >
               Suggestie toevoegen
-            </button>
-          </div>
+            </button> */}
+          <button
+            className="border rounded border-black bg-green-200 p-2 self-center w-full"
+            onClick={() => setOpenSuggestionModal(true)}
+          >
+            Suggestie toevoegen
+          </button>
         </div>
         <div className="self-center text-center">
           <div className="text-3xl font-bold">Vandaag gaan we eten</div>
