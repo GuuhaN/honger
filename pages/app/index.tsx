@@ -3,9 +3,8 @@ import { PrismaClient, Restaurant, Prisma } from "@prisma/client";
 import Confetti from "react-confetti";
 import { useRouter } from "next/router";
 
-const prisma = new PrismaClient();
-
 export async function getServerSideProps() {
+  const prisma = new PrismaClient();
   const restaurants: Restaurant[] = await prisma.restaurant.findMany();
   // const restaurants: Restaurant[] = [];
 
@@ -19,6 +18,21 @@ export async function getServerSideProps() {
 async function saveRestaurant(restaurant: Prisma.RestaurantCreateInput) {
   if (!restaurant.name) {
     alert("Suggestion cannot be empty");
+    return;
+  }
+
+  const prisma = new PrismaClient();
+
+  const foundRestaurants: Restaurant[] = await prisma.restaurant.findMany();
+
+  if (
+    foundRestaurants.find(
+      (foundRestaurant) =>
+        foundRestaurant.name.replace(/\s/g, "").toLowerCase() ==
+        restaurant.name.replace(/\s/g, "").toLowerCase()
+    )
+  ) {
+    alert("This restaurant already exists");
     return;
   }
 
@@ -99,9 +113,21 @@ export default function App({ restaurants }: any) {
             <button
               className="border rounded border-black bg-green-200 p-2 self-center w-full"
               onClick={() => {
-                saveRestaurant({ name: suggestionInput ?? "" }).then(() => {
-                  router.replace(router.asPath);
-                });
+                if (
+                  restaurants.find(
+                    (restaurant: Restaurant) =>
+                      restaurant.name.replace(/\s/g, "").toLowerCase() ==
+                      suggestionInput?.replace(/\s/g, "").toLowerCase()
+                  ) != null
+                ) {
+                  alert("This suggestion already exists!");
+                } else {
+                  saveRestaurant({
+                    name: suggestionInput ?? "",
+                  }).then(() => {
+                    router.replace(router.asPath);
+                  });
+                }
               }}
             >
               Suggestie toevoegen
