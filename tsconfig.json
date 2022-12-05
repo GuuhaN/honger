@@ -17,6 +17,6 @@
     "sourceMap": true,
     "outDir": "dist",
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "lib/prisma.tss"],
   "exclude": ["node_modules"]
 }
