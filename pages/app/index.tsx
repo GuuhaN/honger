@@ -66,7 +66,8 @@ export default function App({ restaurants }: any) {
 
   return (
     <div className="flex bg-green-100 h-screen">
-      {restaurants[randomNumber]?.name === "KFC" && (
+      {restaurants[randomNumber]?.name.replace(/\s/g, "").toLowerCase() ===
+        "kfc" && (
         <>
           <Confetti
             className="h-screen w-screen"
