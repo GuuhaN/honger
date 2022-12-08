@@ -1,81 +1,54 @@
 import { useEffect, useState } from "react";
-import { Prisma, Restaurant } from "@prisma/client";
 import { useRouter } from "next/router";
-import prisma from "../../components/prisma";
 import Confetti from "react-confetti";
 import dynamic from "next/dynamic";
+import { get } from "../api/restaurant";
+import { Restaurant } from "../../domains/restaurant";
 const SuggestionModal = dynamic(
   () => import("../../components/modals/suggestionModal"),
   { ssr: false }
 );
 
-export async function getServerSideProps() {
-  const restaurants: Restaurant[] = await prisma.restaurant.findMany();
-  // const restaurants: Restaurant[] = [];
-
-  return {
-    props: {
-      restaurants: restaurants,
-    },
-  };
-}
-
-async function saveRestaurant(restaurant: Prisma.RestaurantCreateInput) {
-  if (!restaurant.name) {
-    alert("Suggestion cannot be empty");
-    return;
-  }
-
-  const response = await fetch("api/restaurant", {
-    method: "POST",
-    body: JSON.stringify(restaurant),
-  });
-
-  if (!response.ok) {
-    throw new Error(response.statusText);
-  }
-
-  alert(`${restaurant.name} added!`);
-
-  return await response.json();
-}
-
-export default function App({ restaurants }: any) {
+export default function App() {
   const router = useRouter();
 
-  const [suggestionInput, setSuggestionInput] = useState<string>();
+  const [openSuggestionModal, setOpenSuggestionModal] = useState(false);
+  const [restaurants, setRestaurants] = useState<Restaurant[]>();
   const [randomNumber, setRandomNumber] = useState<number>(
-    restaurants.length + 1
+    Math.max() * Math.random()
   );
 
-  const [openSuggestionModal, setOpenSuggestionModal] = useState(false);
-
   useEffect(() => {
-    if (!router.isReady) return;
+    if (router.isReady && restaurants == null) {
+      get().then((response) => {
+        setRestaurants(response);
+      });
 
-    setRandomNumber(restaurants.length + 1);
-  }, [restaurants]);
+      setRandomNumber(Math.max() * Math.random());
+    }
+  }, [router.isReady, setRestaurants]);
 
   return (
     <div className="flex bg-green-100 h-screen">
-      {restaurants[randomNumber]?.name.replace(/\s/g, "").toLowerCase() ===
-        "kfc" && (
-        <>
-          <Confetti
-            className="h-screen w-screen"
-            numberOfPieces={200}
-            wind={0.025}
-            gravity={0.05}
-            style={{ zIndex: 0 }}
-          />
-          <audio src="audio/SIU.mp3" autoPlay></audio>
-        </>
-      )}
+      {restaurants &&
+        restaurants[randomNumber]?.name.replace(/\s/g, "").toLowerCase() ===
+          "kfc" && (
+          <>
+            <Confetti
+              className="h-screen w-screen"
+              numberOfPieces={200}
+              wind={0.025}
+              gravity={0.05}
+              style={{ zIndex: 0 }}
+            />
+            <audio src="audio/SIU.mp3" autoPlay></audio>
+          </>
+        )}
       {openSuggestionModal && (
         <SuggestionModal
           isOpen={openSuggestionModal}
-          restaurants={restaurants}
           closeModal={() => setOpenSuggestionModal(false)}
+          setRestaurants={setRestaurants}
         />
       )}
       <div className="flex flex-col justify-center m-auto gap-4">
@@ -92,7 +65,10 @@ export default function App({ restaurants }: any) {
                   let randNum = randomNumber;
 
                   while (randNum === randomNumber) {
-                    randNum = Math.floor(Math.random() * restaurants.length);
+                    if (restaurants && restaurants.length > 0) {
+                      randNum = Math.floor(Math.random() * restaurants.length);
+                      break;
+                    }
                   }
 
                   setRandomNumber(randNum);
@@ -102,36 +78,6 @@ export default function App({ restaurants }: any) {
               </button>
             </div>
           </div>
-
-          {/* <input
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              id="suggestionName"
-              type="text"
-              placeholder="Restaurant naam"
-              onChange={(event) => setSuggestionInput(event.target.value)}
-            /> */}
-          {/* <button
-              className="border rounded border-black bg-green-200 p-2 self-center w-full"
-              onClick={() => {
-                if (
-                  restaurants.find(
-                    (restaurant: Restaurant) =>
-                      restaurant.name.replace(/\s/g, "").toLowerCase() ==
-                      suggestionInput?.replace(/\s/g, "").toLowerCase()
-                  ) != null
-                ) {
-                  alert("This suggestion already exists!");
-                } else {
-                  saveRestaurant({
-                    name: suggestionInput ?? "",
-                  }).then(() => {
-                    router.replace(router.asPath);
-                  });
-                }
-              }}
-            >
-              Suggestie toevoegen
-            </button> */}
           <button
             className="border rounded border-black bg-green-200 p-2 self-center w-full"
             onClick={() => setOpenSuggestionModal(true)}
@@ -142,7 +88,7 @@ export default function App({ restaurants }: any) {
         <div className="self-center text-center">
           <div className="text-3xl font-bold">Vandaag gaan we eten</div>
           <div className="text-2xl tracking-widest">
-            {restaurants[randomNumber]
+            {restaurants && restaurants[randomNumber]
               ? restaurants[randomNumber].name
               : "Nog geen idee"}
           </div>

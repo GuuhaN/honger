@@ -1,18 +1,28 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { PrismaClient } from "@prisma/client";
+import axios from "axios";
+import { Restaurant } from "../../domains/restaurant";
 
-const prisma = new PrismaClient();
+export async function get() {
+  return await axios
+    .get<Restaurant[]>(`${process.env.NEXT_PUBLIC_BASE_URL}/Restaurants`)
+    .then((response) => {
+      return response.data as Restaurant[];
+    });
+}
 
-export default async (req: NextApiRequest, res: NextApiResponse) => {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method not allowed" });
+export async function create(restaurant: Restaurant) {
+  if (restaurant.name.length <= 0) {
+    alert("Restaurant name cannot be empty");
+    return;
   }
 
-  const restaurantData = JSON.parse(req.body);
-
-  const savedRestaurants = await prisma.restaurant.create({
-    data: restaurantData,
-  });
-
-  res.json(savedRestaurants);
-};
+  return await axios
+    .post(`${process.env.NEXT_PUBLIC_BASE_URL}/Restaurants`, {
+      name: restaurant.name,
+      address: restaurant.address,
+      houseNumber: restaurant.houseNumber,
+      postCode: restaurant.postCode,
+    })
+    .then((data) => {
+      return data;
+    });
+}
