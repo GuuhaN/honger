@@ -3,40 +3,21 @@ import React from "react";
 import ReactModal from "react-modal";
 import { LatLngExpression } from "leaflet";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import { Restaurant, Prisma } from "@prisma/client";
 import "leaflet/dist/leaflet.css";
 import { useForm } from "react-hook-form";
+import { Restaurant } from "../../domains/restaurant";
+import { create, get } from "../../pages/api/restaurant";
 
 interface Props {
   isOpen: boolean;
-  restaurants: Restaurant[];
   closeModal: any;
-}
-
-async function saveRestaurant(restaurant: Prisma.RestaurantCreateInput) {
-  if (!restaurant.name) {
-    alert("Suggestion cannot be empty");
-    return;
-  }
-
-  const response = await fetch("api/restaurant", {
-    method: "POST",
-    body: JSON.stringify(restaurant),
-  });
-
-  if (!response.ok) {
-    throw new Error(response.statusText);
-  }
-
-  alert(`${restaurant.name} added!`);
-
-  return await response.json();
+  setRestaurants: any;
 }
 
 export default function SuggestionModal({
   isOpen,
-  restaurants,
   closeModal,
+  setRestaurants,
 }: Props) {
   const customStyles = {
     content: {
@@ -62,20 +43,36 @@ export default function SuggestionModal({
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm();
+  } = useForm<Restaurant>();
 
-  const onSubmit = (data: any) => {
+  const onSubmit = async (data: Restaurant) => {
+    let foundRestaurants: Restaurant[] = [];
+
+    await get().then((response) => {
+      foundRestaurants = response;
+    });
+
     if (
-      restaurants.find(
+      foundRestaurants &&
+      foundRestaurants.find(
         (restaurant: Restaurant) =>
           restaurant.name.replace(/\s/g, "").toLowerCase() ==
-          data.suggestionName.replace(/\s/g, "").toLowerCase()
+          data.name.replace(/\s/g, "").toLowerCase()
       ) != null
     ) {
       alert("This suggestion already exists!");
     } else {
-      saveRestaurant({
-        name: data.suggestionName ?? "",
+      data.postCode = "3542AB";
+      data.houseNumber = 50;
+      data.address = "Atoomweg 50";
+      await create(data).then((response) => {
+        get().then((response) => {
+          setRestaurants(response);
+        });
+
+        if (response) {
+          closeModal();
+        }
       });
     }
   };
@@ -94,10 +91,10 @@ export default function SuggestionModal({
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
             <input
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              id="suggestionName"
+              id="name"
               type="text"
               placeholder="Restaurant naam"
-              {...register("suggestionName")}
+              {...register("name")}
             />
             <button
               className="border rounded border-black bg-green-200 p-2 self-center w-full"
@@ -110,7 +107,8 @@ export default function SuggestionModal({
         <MapContainer
           center={location}
           zoom={16}
-          style={{ width: "25vw", height: "50vh" }}
+          className="w-full"
+          style={{ minWidth: "25vw", height: "50vh" }}
           scrollWheelZoom={false}
         >
           <TileLayer
