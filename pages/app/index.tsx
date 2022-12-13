@@ -64,8 +64,8 @@ export default function App() {
                 onClick={() => {
                   let randNum = randomNumber;
 
-                  while (randNum === randomNumber) {
-                    if (restaurants && restaurants.length > 0) {
+                  if (restaurants && restaurants.length > 0) {
+                    while (randNum === randomNumber) {
                       randNum = Math.floor(Math.random() * restaurants.length);
                       break;
                     }
