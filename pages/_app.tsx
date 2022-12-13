@@ -6,6 +6,7 @@ export default function App({ Component, pageProps }: AppProps) {
     <>
       <script
         src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}&libraries=places`}
+        async
       />
       <Component {...pageProps} />
     </>
