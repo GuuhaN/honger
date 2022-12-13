@@ -1,13 +1,11 @@
 import React, { useCallback } from "react";
 import ReactModal from "react-modal";
-import "leaflet/dist/leaflet.css";
 import { useForm } from "react-hook-form";
 import { Restaurant } from "../../domains/restaurant";
 import { create, get } from "../../pages/api/restaurant";
 import { GoogleMap, useJsApiLoader } from "@react-google-maps/api";
 import usePlacesService from "react-google-autocomplete/lib/usePlacesAutocompleteService";
 import Head from "next/head";
-import { stringify } from "querystring";
 
 interface Props {
   isOpen: boolean;
