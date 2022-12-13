@@ -1,12 +1,13 @@
-import L from "leaflet";
-import React from "react";
+import React, { useCallback } from "react";
 import ReactModal from "react-modal";
-import { LatLngExpression } from "leaflet";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useForm } from "react-hook-form";
 import { Restaurant } from "../../domains/restaurant";
 import { create, get } from "../../pages/api/restaurant";
+import { GoogleMap, useJsApiLoader } from "@react-google-maps/api";
+import usePlacesService from "react-google-autocomplete/lib/usePlacesAutocompleteService";
+import Head from "next/head";
+import { stringify } from "querystring";
 
 interface Props {
   isOpen: boolean;
@@ -31,21 +32,37 @@ export default function SuggestionModal({
     },
   };
 
-  const icon = new L.Icon({
-    iconUrl: "./marker.png",
-    iconSize: new L.Point(25, 25),
-    iconAnchor: [13, 41],
-  });
+  const containerStyle = {
+    minWidth: "40vw",
+    minHeight: "50vh",
+  };
 
-  const location: LatLngExpression = [52.1072317, 5.0650176];
+  const center = {
+    lat: 52.107376648427135,
+    lng: 5.065017598461061,
+  };
+
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY ?? "",
+  });
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
   } = useForm<Restaurant>();
 
   const onSubmit = async (data: Restaurant) => {
+    if (!data) {
+      return;
+    }
+
+    if (!data.name || !data.address) {
+      return;
+    }
+
     let foundRestaurants: Restaurant[] = [];
 
     await get().then((response) => {
@@ -62,64 +79,117 @@ export default function SuggestionModal({
     ) {
       alert("This suggestion already exists!");
     } else {
-      data.postCode = "3542AB";
-      data.houseNumber = 50;
-      data.address = "Atoomweg 50";
-      await create(data).then((response) => {
+      await create({
+        id: "",
+        name: data.name,
+        address: data.address,
+      }).then((response) => {
         get().then((response) => {
           setRestaurants(response);
         });
-
         if (response) {
-          closeModal();
+          alert(`Added ${data.name} - ${data.address}`);
         }
       });
     }
   };
 
+  const { placesService } = usePlacesService({
+    apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
+  });
+
+  const onMapClick = async (details: google.maps.places.PlaceResult) => {
+    if (!details) {
+      return;
+    }
+
+    if (!details.types?.includes("restaurant")) {
+      return;
+    }
+
+    if (!details.name && details.formatted_address) {
+      return;
+    }
+
+    setValue("name", details.name ?? "");
+    setValue("address", details.formatted_address ?? "");
+  };
+
   return (
-    <ReactModal
-      isOpen={isOpen}
-      onRequestClose={closeModal}
-      style={customStyles}
-      ariaHideApp={false}
-      shouldCloseOnEsc
-    >
-      <div className="p-2 space-y-2">
-        <div className="text-2xl font-bold">Restarant Suggestie</div>
-        <div className="flex flex-col">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
-            <input
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              id="name"
-              type="text"
-              placeholder="Restaurant naam"
-              {...register("name")}
-            />
-            <button
-              className="border rounded border-black bg-green-200 p-2 self-center w-full"
-              type="submit"
-            >
-              Suggestie toevoegen
-            </button>
-          </form>
+    <>
+      <Head>
+        <title>Search restaurants</title>
+      </Head>
+      <ReactModal
+        isOpen={isOpen}
+        onRequestClose={closeModal}
+        style={customStyles}
+        ariaHideApp={false}
+        shouldCloseOnEsc
+      >
+        <div className="p-2 space-y-2">
+          <div className="text-2xl font-bold">Restarant Suggestie</div>
+          <div className="flex flex-col">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+              {isLoaded ? (
+                <GoogleMap
+                  mapContainerStyle={containerStyle}
+                  center={center}
+                  zoom={15}
+                  options={{ streetViewControl: false }}
+                  onClick={(event) => {
+                    let clickEvent: google.maps.IconMouseEvent =
+                      event as google.maps.IconMouseEvent;
+
+                    if (!clickEvent.placeId) {
+                      return;
+                    }
+
+                    placesService?.getDetails(
+                      {
+                        placeId: clickEvent.placeId,
+                      },
+                      (details) => {
+                        if (!details) {
+                          return;
+                        }
+
+                        onMapClick(details);
+                      }
+                    );
+                  }}
+                >
+                  <></>
+                </GoogleMap>
+              ) : (
+                <></>
+              )}
+              <input
+                className="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="name"
+                type="text"
+                placeholder="Restaurant naam"
+                {...register("name")}
+                disabled
+              />
+              <input
+                className="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="name"
+                type="text"
+                placeholder="Adres"
+                {...register("address")}
+                disabled
+              />
+              <button
+                className="border rounded border-black bg-green-200 p-2 self-center w-full"
+                type="submit"
+              >
+                Suggestie toevoegen
+              </button>
+            </form>
+          </div>
         </div>
-        <MapContainer
-          center={location}
-          zoom={16}
-          className="w-full"
-          style={{ minWidth: "25vw", height: "50vh" }}
-          scrollWheelZoom={false}
-        >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          />
-          <Marker position={location} icon={icon}>
-            <Popup autoClose>Chief-IT HEUJ</Popup>
-          </Marker>
-        </MapContainer>
-      </div>
-    </ReactModal>
+      </ReactModal>
+    </>
   );
 }
