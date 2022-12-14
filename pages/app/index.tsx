@@ -31,8 +31,10 @@ export default function App() {
   return (
     <div className="flex bg-green-100 h-screen">
       {restaurants &&
-        restaurants[randomNumber]?.name.replace(/\s/g, "").toLowerCase() ===
-          "kfc" && (
+        restaurants[randomNumber]?.name
+          .replace(/\s/g, "")
+          .toLowerCase()
+          .match("kfc") && (
           <>
             <Confetti
               className="h-screen w-screen"
