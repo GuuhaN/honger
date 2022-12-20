@@ -140,6 +140,7 @@ export default function App() {
                     .fill(0)
                     .map((item, index) => (
                       <div
+                        key={index}
                         className="text-xl font-extralight cursor-pointer hover:font-bold"
                         onClick={() => rateRestaurant(index + 1)}
                       >
