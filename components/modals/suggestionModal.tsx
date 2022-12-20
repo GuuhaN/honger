@@ -1,11 +1,11 @@
-import React, { useCallback } from "react";
+import React from "react";
 import ReactModal from "react-modal";
 import { useForm } from "react-hook-form";
 import { Restaurant } from "../../domains/restaurant";
-import { create, get } from "../../pages/api/restaurant";
 import { GoogleMap, useJsApiLoader } from "@react-google-maps/api";
 import usePlacesService from "react-google-autocomplete/lib/usePlacesAutocompleteService";
 import Head from "next/head";
+import { createRestaurant, getRestaurant } from "../../pages/api/restaurant";
 
 interface Props {
   isOpen: boolean;
@@ -63,7 +63,7 @@ export default function SuggestionModal({
 
     let foundRestaurants: Restaurant[] = [];
 
-    await get().then((response) => {
+    await getRestaurant().then((response) => {
       foundRestaurants = response;
     });
 
@@ -77,12 +77,12 @@ export default function SuggestionModal({
     ) {
       alert("This suggestion already exists!");
     } else {
-      await create({
+      await createRestaurant({
         id: "",
         name: data.name,
         address: data.address,
       }).then((response) => {
-        get().then((response) => {
+        getRestaurant().then((response) => {
           setRestaurants(response);
         });
         if (response) {
