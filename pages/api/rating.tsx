@@ -24,5 +24,7 @@ export async function createRating(rating: Rating) {
     .then((data) => {
       return data;
     })
-    .catch((error) => alert(error.response.data));
+    .catch(() =>
+      alert("You already voted on this restaurant today, come back tomorrow :)")
+    );
 }
