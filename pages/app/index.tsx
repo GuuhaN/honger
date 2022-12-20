@@ -2,12 +2,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Confetti from "react-confetti";
 import dynamic from "next/dynamic";
-import { get } from "../api/restaurant";
+import { getRestaurant, getRestaurantRatings } from "../api/restaurant";
 import { Restaurant } from "../../domains/restaurant";
 const SuggestionModal = dynamic(
   () => import("../../components/modals/suggestionModal"),
   { ssr: false }
 );
+import { createRating } from "../api/rating";
+import { RestaurantRating } from "../../domains/restaurantRating";
+import Snowfall from "react-snowfall";
 
 export default function App() {
   const router = useRouter();
@@ -17,10 +20,12 @@ export default function App() {
   const [randomNumber, setRandomNumber] = useState<number>(
     Math.max() * Math.random()
   );
+  const [restaurantRating, setRestaurantRating] = useState<RestaurantRating>();
+  const [rating, setRating] = useState(false);
 
   useEffect(() => {
     if (router.isReady && restaurants == null) {
-      get().then((response) => {
+      getRestaurant().then((response) => {
         setRestaurants(response);
       });
 
@@ -28,8 +33,25 @@ export default function App() {
     }
   }, [router.isReady, setRestaurants]);
 
+  const rateRestaurant = (score: number) => {
+    if (score <= 0 || score > 5) return;
+
+    if (!restaurants) return;
+
+    if (!restaurants[randomNumber]) return;
+
+    createRating({
+      id: "",
+      restaurantId: restaurants[randomNumber].id,
+      score: score,
+    }).then((response) => {
+      console.log(response);
+    });
+  };
+
   return (
     <div className="flex bg-green-100 h-screen">
+      <Snowfall />
       {restaurants &&
         restaurants[randomNumber]?.name
           .replace(/\s/g, "")
@@ -73,6 +95,14 @@ export default function App() {
                     }
                   }
 
+                  if (restaurants) {
+                    getRestaurantRatings(restaurants[randNum].id).then(
+                      (response) => {
+                        setRestaurantRating(response);
+                      }
+                    );
+                  }
+                  setRating(false);
                   setRandomNumber(randNum);
                 }}
               >
@@ -87,13 +117,46 @@ export default function App() {
             Suggestie toevoegen
           </button>
         </div>
-        <div className="self-center text-center">
+        <div className="self-center text-center gap-2 flex flex-col">
           <div className="text-3xl font-bold">Vandaag gaan we eten</div>
           <div className="text-2xl tracking-widest">
             {restaurants && restaurants[randomNumber]
-              ? restaurants[randomNumber].name
+              ? `${restaurants[randomNumber].name} (${
+                  restaurantRating?.ratings &&
+                  restaurantRating?.ratings.length > 0
+                    ? `★${restaurantRating?.averageRating}`
+                    : "No"
+                } hongurating 🧍)`
               : "Nog geen idee"}
           </div>
+          {restaurants && restaurants[randomNumber] && (
+            <div className="flex flex-col gap-2">
+              <div className="text-xl tracking-widest">
+                {restaurants[randomNumber].address}
+              </div>
+              {rating ? (
+                <div className="flex flex-row justify-center gap-x-4">
+                  {Array(5)
+                    .fill(0)
+                    .map((item, index) => (
+                      <div
+                        className="text-xl font-extralight cursor-pointer hover:font-bold"
+                        onClick={() => rateRestaurant(index + 1)}
+                      >
+                        {index + 1}
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                <button
+                  className="border rounded border-black bg-green-400 self-center w-32"
+                  onClick={() => setRating(true)}
+                >
+                  Rate restaurant
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

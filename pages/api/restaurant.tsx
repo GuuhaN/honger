@@ -1,7 +1,8 @@
 import axios from "axios";
 import { Restaurant } from "../../domains/restaurant";
+import { RestaurantRating } from "../../domains/restaurantRating";
 
-export async function get() {
+export async function getRestaurant() {
   return await axios
     .get<Restaurant[]>(`${process.env.NEXT_PUBLIC_BASE_URL}/Restaurants`)
     .then((response) => {
@@ -9,7 +10,7 @@ export async function get() {
     });
 }
 
-export async function create(restaurant: Restaurant) {
+export async function createRestaurant(restaurant: Restaurant) {
   if (restaurant.name.length <= 0) {
     alert("Restaurant name cannot be empty");
     return;
@@ -22,5 +23,15 @@ export async function create(restaurant: Restaurant) {
     })
     .then((data) => {
       return data;
+    });
+}
+
+export async function getRestaurantRatings(restaurantId: string) {
+  return await axios
+    .get<RestaurantRating>(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/Restaurants/${restaurantId}/ratings`
+    )
+    .then((response) => {
+      return response.data as RestaurantRating;
     });
 }
