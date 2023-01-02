@@ -1,5 +1,4 @@
 import axios from "axios";
-import { stringify } from "querystring";
 import { Rating } from "../../domains/rating";
 
 export async function getRatings() {

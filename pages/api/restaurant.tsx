@@ -20,6 +20,7 @@ export async function createRestaurant(restaurant: Restaurant) {
     .post(`${process.env.NEXT_PUBLIC_BASE_URL}/Restaurants`, {
       name: restaurant.name,
       address: restaurant.address,
+      placeId: restaurant.placeId,
     })
     .then((data) => {
       return data;
