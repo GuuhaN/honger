@@ -11,6 +11,7 @@ const SuggestionModal = dynamic(
 import { createRating } from "../api/rating";
 import { RestaurantRating } from "../../domains/restaurantRating";
 import Snowfall from "react-snowfall";
+import DirectionModal from "../../components/modals/directionModal";
 
 export default function App() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function App() {
   );
   const [restaurantRating, setRestaurantRating] = useState<RestaurantRating>();
   const [rating, setRating] = useState(false);
+  const [showDirections, setShowDirections] = useState(false);
 
   useEffect(() => {
     if (router.isReady && restaurants == null) {
@@ -45,7 +47,13 @@ export default function App() {
       restaurantId: restaurants[randomNumber].id,
       score: score,
     }).then((response) => {
-      console.log(response);
+      if (!response) return;
+      alert(
+        `Jij hebt ${restaurants[randomNumber].name} een ${score} hongurating gegeven.`
+      );
+      getRestaurantRatings(restaurants[randomNumber].id).then((response) => {
+        setRestaurantRating(response);
+      });
     });
   };
 
@@ -73,6 +81,13 @@ export default function App() {
           isOpen={openSuggestionModal}
           closeModal={() => setOpenSuggestionModal(false)}
           setRestaurants={setRestaurants}
+        />
+      )}
+      {showDirections && restaurants && restaurants[randomNumber] && (
+        <DirectionModal
+          isOpen={showDirections}
+          closeModal={() => setShowDirections(false)}
+          placeId={restaurants[randomNumber].placeId}
         />
       )}
       <div className="flex flex-col justify-center m-auto gap-4">
@@ -134,28 +149,41 @@ export default function App() {
               <div className="text-xl tracking-widest">
                 {restaurants[randomNumber].address}
               </div>
-              {rating ? (
-                <div className="flex flex-row justify-center gap-x-4">
-                  {Array(5)
-                    .fill(0)
-                    .map((item, index) => (
-                      <div
-                        key={index}
-                        className="text-xl font-extralight cursor-pointer hover:font-bold"
-                        onClick={() => rateRestaurant(index + 1)}
-                      >
-                        {index + 1}
-                      </div>
-                    ))}
-                </div>
-              ) : (
-                <button
-                  className="border rounded border-black bg-green-400 self-center w-32"
-                  onClick={() => setRating(true)}
-                >
-                  Rate restaurant
-                </button>
-              )}
+              <div className="flex flex-row justify-center gap-x-2">
+                {rating ? (
+                  <div className="flex flex-row justify-center gap-x-4">
+                    {Array(5)
+                      .fill(0)
+                      .map((item, index) => (
+                        <div
+                          key={index}
+                          className="text-xl font-extralight cursor-pointer hover:font-bold"
+                          onClick={() => rateRestaurant(index + 1)}
+                        >
+                          {index + 1}
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      className="border rounded border-black bg-green-400 self-center w-32"
+                      onClick={() => setRating(true)}
+                    >
+                      Hongurate geven
+                    </button>
+                    <button
+                      className="border rounded border-black bg-green-400 self-center w-32"
+                      onClick={() => setShowDirections(true)}
+                    >
+                      Route laten zien
+                    </button>
+                    {/* <button className="border rounded border-black bg-green-400 self-center w-32">
+                      Make reservation
+                    </button> */}
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>

@@ -81,6 +81,7 @@ export default function SuggestionModal({
         id: "",
         name: data.name,
         address: data.address,
+        placeId: data.placeId,
       }).then((response) => {
         getRestaurant().then((response) => {
           setRestaurants(response);
@@ -111,6 +112,7 @@ export default function SuggestionModal({
 
     setValue("name", details.name ?? "");
     setValue("address", details.formatted_address ?? "");
+    register("placeId", { value: details.place_id });
   };
 
   return (
