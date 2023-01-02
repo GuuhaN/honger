@@ -75,11 +75,6 @@ export default function DirectionModal({ isOpen, closeModal, placeId }: Props) {
     setRoute(routeResult);
   };
 
-  console.log(
-    navigator.geolocation.getCurrentPosition((lol) => {
-      console.log(lol.coords.latitude);
-    })
-  );
   return (
     <>
       <Head>
