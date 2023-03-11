@@ -12,8 +12,11 @@ import { createRating } from "../api/rating";
 import { RestaurantRating } from "../../domains/restaurantRating";
 import Snowfall from "react-snowfall";
 import DirectionModal from "../../components/modals/directionModal";
+import { useAuth0 } from "@auth0/auth0-react";
 
 export default function App() {
+  const { isLoading, isAuthenticated, error, user, loginWithRedirect, logout } =
+    useAuth0();
   const router = useRouter();
 
   const [openSuggestionModal, setOpenSuggestionModal] = useState(false);
@@ -58,7 +61,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex bg-green-100 h-screen">
+    <div className="flex bg-green-100 h-screen flex-col">
       <Snowfall />
       {restaurants &&
         restaurants[randomNumber]?.name
@@ -91,102 +94,127 @@ export default function App() {
         />
       )}
       <div className="flex flex-col justify-center m-auto gap-4">
-        <div className="flex flex-col self-center gap-4">
-          <div className="flex flex-col gap-2">
-            <div className="text-5xl font-bold">{`Honger <°>`}</div>
-            <div className="text-2xl font-light tracking-widest">Eten</div>
-            <div className="text-xl font-light tracking-wide">Schuiven</div>
-            <div className="flex">
-              <button
-                className="border rounded border-black bg-green-400 p-2 w-full"
-                type="submit"
-                onClick={() => {
-                  let randNum = randomNumber;
-
-                  if (restaurants && restaurants.length > 0) {
-                    while (randNum === randomNumber) {
-                      randNum = Math.floor(Math.random() * restaurants.length);
-                      break;
-                    }
-                  }
-
-                  if (restaurants) {
-                    getRestaurantRatings(restaurants[randNum].id).then(
-                      (response) => {
-                        setRestaurantRating(response);
-                      }
-                    );
-                  }
-                  setRating(false);
-                  setRandomNumber(randNum);
-                }}
-              >
-                Waar gaan we eten
-              </button>
-            </div>
-          </div>
-          <button
-            className="border rounded border-black bg-green-200 p-2 self-center w-full"
-            onClick={() => setOpenSuggestionModal(true)}
-          >
-            Suggestie toevoegen
-          </button>
+        <div>
+          <div className="text-5xl font-bold">{`Honger <°>`}</div>
+          <div className="text-2xl font-light tracking-widest">Eten</div>
+          <div className="text-xl font-light tracking-wide">Schuiven</div>
         </div>
-        <div className="self-center text-center gap-2 flex flex-col">
-          <div className="text-3xl font-bold">Vandaag gaan we eten</div>
-          <div className="text-2xl tracking-widest">
-            {restaurants && restaurants[randomNumber]
-              ? `${restaurants[randomNumber].name} (${
-                  restaurantRating?.ratings &&
-                  restaurantRating?.ratings.length > 0
-                    ? `★${restaurantRating?.averageRating}`
-                    : "No"
-                } hongurating 🧍)`
-              : "Nog geen idee"}
-          </div>
-          {restaurants && restaurants[randomNumber] && (
+        {isAuthenticated && (
+          <div className="flex flex-col self-center gap-4">
             <div className="flex flex-col gap-2">
-              <div className="text-xl tracking-widest">
-                {restaurants[randomNumber].address}
+              <div className="flex">
+                <button
+                  className="border rounded border-black bg-green-400 p-2 w-full"
+                  type="submit"
+                  onClick={() => {
+                    let randNum = randomNumber;
+
+                    if (restaurants && restaurants.length > 0) {
+                      while (randNum === randomNumber) {
+                        randNum = Math.floor(
+                          Math.random() * restaurants.length
+                        );
+                        break;
+                      }
+                    }
+
+                    if (restaurants) {
+                      getRestaurantRatings(restaurants[randNum].id).then(
+                        (response) => {
+                          setRestaurantRating(response);
+                        }
+                      );
+                    }
+                    setRating(false);
+                    setRandomNumber(randNum);
+                  }}
+                >
+                  Waar gaan we eten
+                </button>
               </div>
-              <div className="flex flex-row justify-center gap-x-2">
-                {rating ? (
-                  <div className="flex flex-row justify-center gap-x-4">
-                    {Array(5)
-                      .fill(0)
-                      .map((item, index) => (
-                        <div
-                          key={index}
-                          className="text-xl font-extralight cursor-pointer hover:font-bold"
-                          onClick={() => rateRestaurant(index + 1)}
-                        >
-                          {index + 1}
-                        </div>
-                      ))}
-                  </div>
-                ) : (
-                  <>
-                    <button
-                      className="border rounded border-black bg-green-400 self-center w-32"
-                      onClick={() => setRating(true)}
-                    >
-                      Hongurate geven
-                    </button>
-                    <button
-                      className="border rounded border-black bg-green-400 self-center w-32"
-                      onClick={() => setShowDirections(true)}
-                    >
-                      Route laten zien
-                    </button>
-                    {/* <button className="border rounded border-black bg-green-400 self-center w-32">
+            </div>
+            <button
+              className="border rounded border-black bg-green-200 p-2 self-center w-full"
+              onClick={() => setOpenSuggestionModal(true)}
+            >
+              Suggestie toevoegen
+            </button>
+          </div>
+        )}
+        {isAuthenticated && (
+          <div className="self-center text-center gap-2 flex flex-col">
+            <div className="text-3xl font-bold">Vandaag gaan we eten</div>
+            <div className="text-2xl tracking-widest">
+              {restaurants && restaurants[randomNumber]
+                ? `${restaurants[randomNumber].name} (${
+                    restaurantRating?.ratings &&
+                    restaurantRating?.ratings.length > 0
+                      ? `★${restaurantRating?.averageRating}`
+                      : "No"
+                  } hongurating 🧍)`
+                : "Nog geen idee"}
+            </div>
+            {restaurants && restaurants[randomNumber] && (
+              <div className="flex flex-col gap-2">
+                <div className="text-xl tracking-widest">
+                  {restaurants[randomNumber].address}
+                </div>
+                <div className="flex flex-row justify-center gap-x-2">
+                  {rating ? (
+                    <div className="flex flex-row justify-center gap-x-4">
+                      {Array(5)
+                        .fill(0)
+                        .map((item, index) => (
+                          <div
+                            key={index}
+                            className="text-xl font-extralight cursor-pointer hover:font-bold"
+                            onClick={() => rateRestaurant(index + 1)}
+                          >
+                            {index + 1}
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        className="border rounded border-black bg-green-400 self-center w-32"
+                        onClick={() => setRating(true)}
+                      >
+                        Hongurate geven
+                      </button>
+                      <button
+                        className="border rounded border-black bg-green-400 self-center w-32"
+                        onClick={() => setShowDirections(true)}
+                      >
+                        Route laten zien
+                      </button>
+                      {/* <button className="border rounded border-black bg-green-400 self-center w-32">
                       Make reservation
                     </button> */}
-                  </>
-                )}
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
+        {!isAuthenticated && (
+          <>
+            <button
+              className="border rounded border-black bg-green-400 p-2 w-full"
+              type="submit"
+              onClick={() => loginWithRedirect()}
+            >
+              Login
+            </button>
+            <button
+              className="border rounded border-black bg-green-200 p-2 w-full"
+              type="submit"
+            >
+              Register
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
